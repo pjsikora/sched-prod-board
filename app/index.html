@@ -16,7 +16,10 @@
     <main data-testid="board" aria-busy="true">
       <div data-testid="loader" class="loader" role="status">Loading incidents…</div>
       <p data-testid="empty" class="empty" hidden>No incidents tonight.</p>
-      <ul data-testid="incident-list" class="list" hidden></ul>
+      <div class="layout">
+        <ul data-testid="incident-list" class="list" hidden></ul>
+        <aside data-testid="panel-slot" class="panel-slot" aria-live="polite"></aside>
+      </div>
     </main>
     <footer>sched-prod incident board · build <code data-testid="build-sha">__BUILD_SHA__</code></footer>
   </body>
