@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="build" content="ff4f24fa81c210037fed6cc6447e06eb0dcc805c" />
+    <meta name="build" content="af0099a82531bc0ab96ad2ff08af999f1f51d577" />
     <title>sched-prod · incidents</title>
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="app.js"></script>
@@ -16,8 +16,11 @@
     <main data-testid="board" aria-busy="true">
       <div data-testid="loader" class="loader" role="status">Loading incidents…</div>
       <p data-testid="empty" class="empty" hidden>No incidents tonight.</p>
-      <ul data-testid="incident-list" class="list" hidden></ul>
+      <div class="layout">
+        <ul data-testid="incident-list" class="list" hidden></ul>
+        <aside data-testid="panel-slot" class="panel-slot" aria-live="polite"></aside>
+      </div>
     </main>
-    <footer>sched-prod incident board · build <code data-testid="build-sha">ff4f24fa81c210037fed6cc6447e06eb0dcc805c</code></footer>
+    <footer>sched-prod incident board · build <code data-testid="build-sha">af0099a82531bc0ab96ad2ff08af999f1f51d577</code></footer>
   </body>
 </html>

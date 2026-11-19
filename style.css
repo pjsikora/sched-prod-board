@@ -17,3 +17,22 @@ footer { color: #777; font-size: 13px; }
 .row button:disabled { opacity: .5; cursor: default; }
 .row .acked { color: #0a7d32; font-weight: 600; }
 .row.is-acked { background: #f2fbf4; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; max-width: 1240px; }
+.row { grid-template-columns: 90px 50px 1fr 160px 70px; cursor: pointer; }
+.row:hover { background: #f5f7ff; }
+.row:focus-visible { outline: 2px solid #3355ff; outline-offset: -2px; }
+.row.is-selected { box-shadow: inset 4px 0 0 #3355ff; background: #eef1ff; }
+.row .open-hint { color: #888; font-size: 13px; }
+.panel-slot { position: sticky; top: 12px; }
+.panel { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px 16px 16px; }
+.panel header { display: flex; justify-content: space-between; align-items: center; padding: 0; }
+.panel h2 { margin: 0; font: 600 18px ui-monospace, monospace; }
+.panel .close { border: 0; background: none; font-size: 22px; cursor: pointer; color: #666; }
+.panel dl { display: grid; grid-template-columns: 84px 1fr; gap: 6px 10px; margin: 12px 0 16px; }
+.panel dt { color: #777; }
+.panel dd { margin: 0; }
+.panel.sev1 .sev { color: #b00020; font-weight: 600; }
+.panel .primary { width: 100%; font: 600 15px system-ui; padding: 10px; border-radius: 6px; border: 0; background: #1d1d1f; color: #fff; cursor: pointer; }
+.panel .primary:disabled { opacity: .5; }
+.panel .acked { color: #0a7d32; font-weight: 600; margin: 0; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .panel-slot { position: static; order: -1; } }

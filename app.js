@@ -7,6 +7,8 @@ const loader = document.querySelector('[data-testid="loader"]');
 const empty = document.querySelector('[data-testid="empty"]');
 
 const acked = new Map(); // incident id -> ackedAt (survives refreshes)
+const incidentsById = new Map(); // latest data per incident id
+let selected = null; // incident id the panel is bound to — never a list position
 const pending = new Set();
 
 // R5: viewer's local time zone and locale order (en-GB/de-DE → dd/mm, en-US → mm/dd).
@@ -25,6 +27,7 @@ function rowHtml(i) {
     <span class="act"></span>`;
 }
 
+// Product decision (after step 1): Ack leaves the row. A row only shows its acked mark.
 function renderAction(li) {
   const id = li.dataset.id;
   const slot = li.querySelector('.act');
@@ -32,7 +35,7 @@ function renderAction(li) {
     li.classList.add('is-acked');
     slot.innerHTML = `<span data-testid="acked" class="acked">✓ acked</span>`;
   } else {
-    slot.innerHTML = `<button data-testid="ack" type="button" ${pending.has(id) ? 'disabled' : ''}>Ack</button>`;
+    slot.innerHTML = `<span class="open-hint">Open ›</span>`;
   }
 }
 
@@ -43,12 +46,16 @@ function render(incidents) {
   for (const [id, li] of byId) if (!keep.has(id)) li.remove();
   let prev = null;
   for (const i of incidents) {
+    incidentsById.set(i.id, i);
     let li = byId.get(i.id);
     if (!li) {
       li = document.createElement('li');
       li.setAttribute('data-testid', 'incident-row');
       li.dataset.id = i.id;
       li.className = `row ${i.severity}`;
+      li.tabIndex = 0;
+      li.setAttribute('role', 'button');
+      li.setAttribute('aria-label', `Open ${i.id}`);
       li.innerHTML = rowHtml(i);
       renderAction(li);
     } else {
@@ -67,14 +74,41 @@ function render(incidents) {
   list.hidden = incidents.length === 0;
 }
 
-// R2: Ack sends api.ack(id) for the row clicked and marks that row acked.
-list.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-testid="ack"]');
-  if (!btn) return;
-  const li = btn.closest('[data-testid="incident-row"]');
-  const id = li.dataset.id;
+// R2 (revised): a row opens its incident panel; Ack lives in the panel and acks the incident the panel names.
+const panelSlot = document.querySelector('[data-testid="panel-slot"]');
+
+function renderPanel() {
+  if (!selected) { panelSlot.innerHTML = ''; return; }
+  const i = incidentsById.get(selected);
+  const id = selected;
+  const done = acked.has(id);
+  panelSlot.innerHTML = `<section data-testid="incident-panel" data-id="${esc(id)}" class="panel ${esc(i.severity)}" aria-label="Incident ${esc(id)}">
+      <header><h2>${esc(id)}</h2><button type="button" class="close" aria-label="Close panel">×</button></header>
+      <dl>
+        <dt>Severity</dt><dd class="sev">${esc(i.severity)}</dd>
+        <dt>Service</dt><dd>${esc(i.service)}</dd>
+        <dt>Region</dt><dd>${esc(i.region)}</dd>
+        <dt>Summary</dt><dd>${esc(i.summary)}</dd>
+        <dt>Opened</dt><dd><time datetime="${esc(i.openedAt)}">${esc(localTime(i.openedAt))}</time></dd>
+      </dl>
+      ${done
+        ? `<p class="acked">✓ ${esc(id)} acked</p>`
+        : `<button data-testid="panel-ack" type="button" class="primary" ${pending.has(id) ? 'disabled' : ''}>Ack ${esc(id)}</button>`}
+    </section>`;
+  panelSlot.querySelector('.close').onclick = () => select(null);
+  panelSlot.querySelector('[data-testid="panel-ack"]')?.addEventListener('click', () => ackSelected(id));
+}
+
+function select(id) {
+  selected = id;
+  for (const li of list.children) li.classList.toggle('is-selected', li.dataset.id === id);
+  renderPanel();
+}
+
+async function ackSelected(id) {
+  if (acked.has(id) || pending.has(id)) return;
   pending.add(id);
-  btn.disabled = true;
+  renderPanel();
   try {
     const reply = await ack(id);
     acked.set(id, reply.ackedAt);
@@ -82,9 +116,21 @@ list.addEventListener('click', async (e) => {
     console.error(err);
   } finally {
     pending.delete(id);
-    renderAction(li);
+    const li = list.querySelector(`[data-testid="incident-row"][data-id="${CSS.escape(id)}"]`);
+    if (li) renderAction(li);
+    if (selected === id) renderPanel();
   }
+}
+
+list.addEventListener('click', (e) => {
+  const li = e.target.closest('[data-testid="incident-row"]');
+  if (li) select(li.dataset.id);
 });
+list.addEventListener('keydown', (e) => {
+  const li = e.target.closest('[data-testid="incident-row"]');
+  if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(li.dataset.id); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && selected) select(null); });
 
 let loaded = false;
 async function tick() {
