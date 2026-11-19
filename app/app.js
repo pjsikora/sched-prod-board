@@ -51,6 +51,13 @@ function render(incidents) {
       li.className = `row ${i.severity}`;
       li.innerHTML = rowHtml(i);
       renderAction(li);
+    } else {
+      const t = li.querySelector('time');
+      if (t.getAttribute('datetime') !== i.openedAt) {
+        t.setAttribute('datetime', i.openedAt);
+        t.title = i.openedAt;
+        t.textContent = localTime(i.openedAt);
+      }
     }
     const want = prev ? prev.nextSibling : list.firstChild;
     if (li !== want) list.insertBefore(li, want);
